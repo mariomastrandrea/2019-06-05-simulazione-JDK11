@@ -7,18 +7,20 @@ import java.sql.SQLException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-public class DBConnect {
-
-	private static final String jdbcURL = "jdbc:mysql://localhost/denver_crimes";
+public class DBConnect 
+{
+	private static final String jdbcURL = "jdbc:mariadb://localhost/denver_crimes";
 	private static HikariDataSource ds;
 	
-	public static Connection getConnection() {
-		
-		if (ds == null) {
+	
+	public static Connection getConnection() 
+	{	
+		if (ds == null) 
+		{
 			HikariConfig config = new HikariConfig();
 			config.setJdbcUrl(jdbcURL);
 			config.setUsername("root");
-			config.setPassword("rootroot");
+			config.setPassword("root");
 			
 			// configurazione MySQL
 			config.addDataSourceProperty("cachePrepStmts", "true");
@@ -28,14 +30,31 @@ public class DBConnect {
 			ds = new HikariDataSource(config);
 		}
 		
-		try {
-			
+		try 
+		{	
 			return ds.getConnection();
-
-		} catch (SQLException e) {
+		} 
+		catch (SQLException e) 
+		{
 			System.err.println("Errore connessione al DB");
 			throw new RuntimeException(e);
 		}
 	}
 
+
+	public static void close(AutoCloseable... resources)
+	{
+		for(var res : resources)
+		{
+			try
+			{
+				res.close();
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+				throw new RuntimeException("Error closing resource: " + res.toString(), e);
+			}
+		}
+	}
 }

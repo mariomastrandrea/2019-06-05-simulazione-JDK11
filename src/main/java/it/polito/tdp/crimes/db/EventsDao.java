@@ -5,28 +5,33 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Year;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import com.javadocmd.simplelatlng.LatLng;
 
 import it.polito.tdp.crimes.model.Event;
 
-
-
-public class EventsDao {
-	
-	public List<Event> listAllEvents(){
-		String sql = "SELECT * FROM events" ;
-		try {
-			Connection conn = DBConnect.getConnection() ;
-
-			PreparedStatement st = conn.prepareStatement(sql) ;
+public class EventsDao 
+{
+	public List<Event> listAllEvents()
+	{
+		String sql = "SELECT * FROM events";
+		try 
+		{
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			List<Event> list = new ArrayList<>();
+			ResultSet res = st.executeQuery();
 			
-			List<Event> list = new ArrayList<>() ;
-			
-			ResultSet res = st.executeQuery() ;
-			
-			while(res.next()) {
-				try {
+			while(res.next()) 
+			{
+				try 
+				{
 					list.add(new Event(res.getLong("incident_id"),
 							res.getInt("offense_code"),
 							res.getInt("offense_code_extension"), 
@@ -41,7 +46,9 @@ public class EventsDao {
 							res.getString("neighborhood_id"),
 							res.getInt("is_crime"),
 							res.getInt("is_traffic")));
-				} catch (Throwable t) {
+				} 
+				catch (Throwable t) 
+				{
 					t.printStackTrace();
 					System.out.println(res.getInt("id"));
 				}
@@ -49,12 +56,119 @@ public class EventsDao {
 			
 			conn.close();
 			return list ;
-
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+		} 
+		catch (SQLException e) 
+		{
 			e.printStackTrace();
 			return null ;
 		}
 	}
 
+	public List<Year> getAllYears()
+	{
+		final String sqlQuery = "SELECT DISTINCT YEAR(reported_date) AS year FROM events ORDER BY year ASC";
+		
+		List<Year> allYears = new ArrayList<>();
+		
+		try
+		{
+			Connection connection = DBConnect.getConnection();
+			PreparedStatement statement = connection.prepareStatement(sqlQuery);
+			ResultSet queryResult = statement.executeQuery();
+			
+			while(queryResult.next())
+			{	
+				try
+				{
+					int yearInt = queryResult.getInt("year");
+					Year year = Year.of(yearInt);
+					allYears.add(year);
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
+			
+			DBConnect.close(queryResult, statement, connection);
+			return allYears;
+		}
+		catch(SQLException sqle)
+		{
+			sqle.printStackTrace();
+			throw new RuntimeException("Dao error in getAllYears()", sqle);
+		}		
+	}
+
+	public Collection<Integer> getAllDistrictIDs()
+	{
+		final String sqlQuery = "SELECT DISTINCT district_id FROM events ORDER BY district_id ASC";
+		
+		Collection<Integer> allIDs = new ArrayList<>();
+		
+		try
+		{
+			Connection connection = DBConnect.getConnection();
+			PreparedStatement statement = connection.prepareStatement(sqlQuery);
+			ResultSet queryResult = statement.executeQuery();
+			
+			while(queryResult.next())
+			{	
+				try
+				{
+					int districtId = queryResult.getInt("district_id");
+					allIDs.add(districtId);
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
+			
+			DBConnect.close(queryResult, statement, connection);
+			return allIDs;
+		}
+		catch(SQLException sqle)
+		{
+			sqle.printStackTrace();
+			throw new RuntimeException("Dao error in getAllDistrictIDs()", sqle);
+		}
+	}
+
+	public Map<Integer, LatLng> getGeographicCenters(Year selectedYear)
+	{
+		final String sqlQuery = String.format("%s %s %s %s",
+				"SELECT district_id, AVG(geo_lon) AS avgLon, AVG(geo_lat) AS avgLat",
+				"FROM events",
+				"WHERE YEAR(reported_date) = ?",
+				"GROUP BY district_id");
+		
+		Map<Integer, LatLng> districtsGeographicCenters = new HashMap<>();
+		
+		try
+		{
+			Connection connection = DBConnect.getConnection();
+			PreparedStatement statement = connection.prepareStatement(sqlQuery);
+			statement.setInt(1, selectedYear.getValue());
+			ResultSet queryResult = statement.executeQuery();
+			
+			while(queryResult.next())
+			{
+				int districtId = queryResult.getInt("district_id");
+				double avgLongitude = queryResult.getDouble("avgLon");
+				double avgLatitude = queryResult.getDouble("avgLat");
+				
+				LatLng avgCoordinates = new LatLng(avgLatitude, avgLongitude);
+				districtsGeographicCenters.put(districtId, avgCoordinates);
+			}
+			
+			DBConnect.close(queryResult, statement, connection);
+			return districtsGeographicCenters;
+		}
+		catch(SQLException sqle)
+		{
+			sqle.printStackTrace();
+			throw new RuntimeException("Dao error in getGeographicCenters()", sqle);
+		}
+	}
 }

@@ -2,8 +2,8 @@ package it.polito.tdp.crimes.model;
 
 import java.time.LocalDateTime;
 
-public class Event {
-	
+public class Event 
+{	
 	private Long incident_id;
 	private Integer offense_code;
 	private Integer offense_code_extension;
@@ -22,8 +22,8 @@ public class Event {
 	public Event(Long incident_id, Integer offense_code, Integer offense_code_extension, String offense_type_id,
 			String offense_category_id, LocalDateTime reported_date, String incident_address, double geo_lon,
 			double geo_lat, Integer district_id, Integer precinct_id, String neighborhood_id, Integer is_crime,
-			Integer is_traffic) {
-		super();
+			Integer is_traffic) 
+	{
 		this.incident_id = incident_id;
 		this.offense_code = offense_code;
 		this.offense_code_extension = offense_code_extension;
@@ -126,15 +126,17 @@ public class Event {
 	}
 
 	@Override
-	public int hashCode() {
+	public int hashCode()
+	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((district_id == null) ? 0 : district_id.hashCode());
+		result = prime * result + ((incident_id == null) ? 0 : incident_id.hashCode());
 		return result;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(Object obj)
+	{
 		if (this == obj)
 			return true;
 		if (obj == null)
@@ -142,11 +144,14 @@ public class Event {
 		if (getClass() != obj.getClass())
 			return false;
 		Event other = (Event) obj;
-		if (district_id == null) {
-			if (other.district_id != null)
+		if (incident_id == null)
+		{
+			if (other.incident_id != null)
 				return false;
-		} else if (!district_id.equals(other.district_id))
-			return false;
+		}
+		else
+			if (!incident_id.equals(other.incident_id))
+				return false;
 		return true;
 	}
 
@@ -155,8 +160,4 @@ public class Event {
 		return "Event [incident_id=" + incident_id + ", offense_category_id=" + offense_category_id + ", reported_date="
 				+ reported_date + ", district_id=" + district_id + "]";
 	}
-	
-	
-	
-	
 }
