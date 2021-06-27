@@ -1,7 +1,10 @@
 package it.polito.tdp.crimes;
 
 import java.net.URL;
+import java.time.LocalDate;
+import java.time.Month;
 import java.time.Year;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +31,10 @@ public class FXMLController
     private ComboBox<Year> boxAnno;
 
     @FXML
-    private ComboBox<?> boxMese;
+    private ComboBox<Month> boxMese;
 
     @FXML
-    private ComboBox<?> boxGiorno;
+    private ComboBox<Integer> boxGiorno;
 
     @FXML
     private Button btnCreaReteCittadina;
@@ -119,7 +122,80 @@ public class FXMLController
 	@FXML
     void doSimula(ActionEvent event) 
     {
-
+		if(!this.model.isGraphCreated())
+		{
+			this.txtResult.setText("Errore: creare prima il grafo");
+			return;
+		}
+		
+		Year selectedYear = this.boxAnno.getValue();
+		Month selectedMonth = this.boxMese.getValue();
+		Integer selectedDay = this.boxGiorno.getValue();
+		
+		if(selectedYear == null || selectedMonth == null || selectedDay == null)
+		{
+			this.txtResult.setText("Errore: selezionare un anno, un mese e un giorno dai menù a tendina");
+			return;
+		}
+		
+		String numInput = this.txtN.getText();
+		
+		if(numInput == null) 
+		{
+			this.txtResult.setText("Errore: inserire un intero N");
+			return;
+		}
+		
+		int num;
+		try
+		{
+			num = Integer.parseInt(numInput.trim());
+		}
+		catch(NumberFormatException nfe)
+		{
+			this.txtResult.setText("Errore: inserire un valore intero valido per N");
+			return;
+		}
+		
+		if(num < 1 || num > 10)
+		{
+			this.txtResult.setText("Errore: inserire un valore intero di N compreso tra 1 e 10 (inclusi)");
+			return;
+		}
+		
+		LocalDate date = LocalDate.of(selectedYear.getValue(), selectedMonth, selectedDay);
+		
+		boolean ok = this.model.runSimulation(num, date);
+		
+		if(!ok)
+		{
+			this.txtResult.setText("Errore: non esistono eventi criminosi in data " + date + ".\nSelezionare un'altra data");
+			return;
+		}
+		
+		int numOfBadManagedEvents = this.model.getNumOfBadManagedEvents();
+		
+		this.txtResult.setText(String.format(
+				"Simulazione effettuata\nData: %02d/%02d/%d\nNumero di eventi criminosi mal gestiti: %d", 
+				selectedDay, selectedMonth.getValue(), selectedYear.getValue(), numOfBadManagedEvents));
+    }
+	
+	@FXML
+    void handleSelection(ActionEvent event) 
+	{
+		this.boxGiorno.getItems().clear();
+		
+		Year selectedYear = this.boxAnno.getValue();
+		Month selectedMonth = this.boxMese.getValue();
+		
+		if(selectedMonth == null || selectedYear == null)
+			return;
+		
+		YearMonth yearMonth = YearMonth.of(selectedYear.getValue(), selectedMonth);
+		int lastDay = yearMonth.lengthOfMonth();
+		
+		for(int i=1; i<=lastDay; i++)
+			this.boxGiorno.getItems().add(i);
     }
 
     @FXML
@@ -140,6 +216,14 @@ public class FXMLController
     	
     	List<Year> allYears = this.model.getAllYears();
     	this.boxAnno.getItems().addAll(allYears);
+    	
+    	int i = 1;
+    	while(i <= 12)
+    	{
+        	Month m = Month.of(i);
+    		this.boxMese.getItems().add(m);
+    		i++;
+    	}
     }
 }
 

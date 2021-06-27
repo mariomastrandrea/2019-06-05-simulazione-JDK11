@@ -1,5 +1,6 @@
 package it.polito.tdp.crimes.model;
 
+import java.time.LocalDate;
 import java.time.Year;
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,17 +18,21 @@ import com.javadocmd.simplelatlng.LatLngTool;
 import com.javadocmd.simplelatlng.util.LengthUnit;
 
 import it.polito.tdp.crimes.db.EventsDao;
+import it.polito.tdp.simulation.Simulator;
 
 public class Model 
 {
 	private final EventsDao dao;
 	private Graph<Integer, DefaultWeightedEdge> graph;
 	private List<Year> allYears;
+	private Map<Integer, Integer> numOfCrimesByDistrict;
+	private final Simulator simulator;
 
 	
 	public Model() 
 	{
 		this.dao = new EventsDao();
+		this.simulator = new Simulator();
 	}
 	
 	public List<Year> getAllYears()
@@ -51,8 +56,10 @@ public class Model
 		Collection<Integer> districtIDs = this.dao.getAllDistrictIDs();
 		Graphs.addAllVertices(this.graph, districtIDs);
 		
+		
+		this.numOfCrimesByDistrict = new HashMap<>();
 		//add edges
-		Map<Integer, LatLng> districtsGeographicCenters = this.dao.getGeographicCenters(selectedYear);
+		Map<Integer, LatLng> districtsGeographicCenters = this.dao.getGeographicCenters(selectedYear, this.numOfCrimesByDistrict);
 		
 		for(var pair1 : districtsGeographicCenters.entrySet())
 		{
@@ -104,6 +111,48 @@ public class Model
 		}
 		
 		return orderedMap;
+	}
+	
+	public boolean isGraphCreated()
+	{
+		return this.graph != null;
+	}
+	
+	public boolean runSimulation(int numAgents, LocalDate date)
+	{
+		if(this.graph == null || numAgents < 1 || numAgents > 10 || 
+				date == null || this.numOfCrimesByDistrict.isEmpty()) 
+			throw new RuntimeException("Error in runSimulation()");
+		
+		Collection<Event> eventsInDate = this.dao.getCrimeEventsOn(date);
+		
+		if(eventsInDate.isEmpty()) return false;
+		
+		//compute the less crimes district
+		int startDistrict = Integer.MAX_VALUE;
+		int minCrimes = Integer.MAX_VALUE;
+		
+		for(int district : this.numOfCrimesByDistrict.keySet())
+		{
+			int numCrimes = this.numOfCrimesByDistrict.get(district);
+			
+			if(numCrimes < minCrimes)
+			{
+				minCrimes = numCrimes;
+				startDistrict = district;
+			}
+		}
+		
+		//initialise and run simulation
+		this.simulator.initialize(this.graph, startDistrict, eventsInDate, numAgents);
+		this.simulator.run();
+		
+		return true;
+	}
+	
+	public int getNumOfBadManagedEvents()
+	{
+		return this.simulator.getNumOfBadManagedEvents();
 	}
 	
 }
