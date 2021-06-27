@@ -104,6 +104,8 @@ public class Simulator
 			int district1 = this.agentsInDistricts.get(a1);
 			int district2 = this.agentsInDistricts.get(a2);
 			
+			if(district1 == district2) return 0;
+			
 			double distance1 = district == district1 ? 0.0 :
 					this.graph.getEdgeWeight(this.graph.getEdge(district, district1));
 			

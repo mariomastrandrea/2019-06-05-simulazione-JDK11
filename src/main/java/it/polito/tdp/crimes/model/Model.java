@@ -59,7 +59,8 @@ public class Model
 		
 		this.numOfCrimesByDistrict = new HashMap<>();
 		//add edges
-		Map<Integer, LatLng> districtsGeographicCenters = this.dao.getGeographicCenters(selectedYear, this.numOfCrimesByDistrict);
+		Map<Integer, LatLng> districtsGeographicCenters = 
+				this.dao.getGeographicCenters(selectedYear, this.numOfCrimesByDistrict);
 		
 		for(var pair1 : districtsGeographicCenters.entrySet())
 		{
