@@ -2,8 +2,11 @@ package it.polito.tdp.crimes;
 
 import java.net.URL;
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.TreeMap;
 
 import it.polito.tdp.crimes.model.Model;
 import javafx.event.ActionEvent;
@@ -58,11 +61,50 @@ public class FXMLController
     	
     	this.model.createGraph(selectedYear);
     	
-    	String output = this.printGraphInfo();
-    	this.txtResult.setText(output);
+    	String graphInfo = this.printGraphInfo();
+    	
+    	//adjacences
+    	TreeMap<Integer, Map<Integer, Double>> districtsAdjacences = this.model.getOrderedDistrictsAdjacences();
+    	String graphAdjacences = this.printDistanceOrderedAdjacences(districtsAdjacences);
+    	
+    	this.txtResult.setText(String.format("%s\n\n%s", graphInfo, graphAdjacences));
     }
 
-    private String printGraphInfo()
+    private String printDistanceOrderedAdjacences(TreeMap<Integer, Map<Integer, Double>> districtsAdjacences)
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		for(var districtPair : districtsAdjacences.entrySet())
+		{
+			int district = districtPair.getKey();
+			var districtMap = districtPair.getValue();
+			
+			sb.append("Distretto ").append(district).append(":");
+			
+			List<Integer> distanceOrderedDistricts = new ArrayList<>(districtMap.keySet());
+			distanceOrderedDistricts.sort((d1, d2) -> 
+			{
+				double distance1 = districtMap.get(d1);
+				double distance2 = districtMap.get(d2);
+				
+				return Double.compare(distance1, distance2);
+			});
+			
+			for(int adjacentDistrict : distanceOrderedDistricts)
+			{
+				double distance = districtMap.get(adjacentDistrict);
+				
+				sb.append("\n - ").append(adjacentDistrict).append(" --> ")
+					.append(String.format("%.3f km", distance));
+			}
+			
+			sb.append("\n\n");
+		}
+		
+		return sb.toString();
+	}
+
+	private String printGraphInfo()
 	{
 		int numVertices = this.model.getNumVertices();
 		int numEdges = this.model.getNumEdges();

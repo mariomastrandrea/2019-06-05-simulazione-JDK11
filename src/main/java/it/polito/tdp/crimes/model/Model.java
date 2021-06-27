@@ -2,8 +2,10 @@ package it.polito.tdp.crimes.model;
 
 import java.time.Year;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
@@ -76,5 +78,32 @@ public class Model
 
 	public int getNumVertices() { return this.graph.vertexSet().size(); }
 	public int getNumEdges() { return this.graph.edgeSet().size(); }
+	
+	public TreeMap<Integer, Map<Integer, Double>> getOrderedDistrictsAdjacences()
+	{
+		if(this.graph == null) return null;
+		
+		TreeMap<Integer, Map<Integer, Double>> orderedMap = new TreeMap<>();
+		
+		for(int district : this.graph.vertexSet())
+		{
+			orderedMap.put(district, new HashMap<>());
+		}
+		
+		for(int district : orderedMap.keySet())
+		{
+			Map<Integer, Double> districtDistances = orderedMap.get(district);
+			
+			for(var adjacentEdge : this.graph.edgesOf(district))
+			{
+				int adjacentDistrict = Graphs.getOppositeVertex(this.graph, adjacentEdge, district);
+				double distance = this.graph.getEdgeWeight(adjacentEdge);
+				
+				districtDistances.put(adjacentDistrict, distance);
+			}
+		}
+		
+		return orderedMap;
+	}
 	
 }
